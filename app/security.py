@@ -56,6 +56,7 @@ class InputSanitization:
 
 
 class PIIDetector:
+
     """
     Detect and mask personally identifiable information.
     Works on BOTH input (before llm) and output (before client)
@@ -91,4 +92,45 @@ class PIIDetector:
         masked = text 
         for pii_type, pattern in self.PATTERNS.items():
             masked = pattern.sub(self.MASK_MAP[pii_type], masked)
-        return masked    
+        return masked  
+
+
+class OutputValidator:
+    """
+    Validate LLM output before returning to the client.
+    Catches PII leakage and harmfull content in response.
+    """
+
+    HARMFUL_PATTERNS = [
+        re.compile(r"here('s| is) (how|the way) to (hack|steal|attack)", re.I),
+        re.compile(r"password\s+is\s+", re.I),
+        re.compile(r"api[_\s]?key\s*[:=]", re.I),
+    ]
+
+    def __init__(self):
+        self.pii_detector = PIIDetector()
+
+
+    def validate(self, output: str) -> tuple[str, list[str]]:
+        """
+        Validate and clean output
+        Returns: (cleaned_output, list_of_warning)
+        """
+
+        warning = []
+
+        # Check for PII leakage in output
+        pii_found = self.pii_detector.detect(output)
+        if pii_found:
+            output = self.pii_detector.mask(output)
+            warning.append(f"PII masked in output: {list(pii_found.keys())}")
+
+        # Check for harmful content
+
+        for pattern in self.HARMFUL_PATTERNS:
+            if pattern.search(output):
+                output = "[Response Blocked: potentially harmfull content]"
+                warning.append("Harmfull content blocked")
+                break
+
+        return output, warning
