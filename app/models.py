@@ -42,7 +42,7 @@ class HealthResponse(BaseModel):
 class MetricResponse(BaseModel):
     """Metric Endpoint Response"""
 
-    total_request: int
+    total_requests: int
     total_errors: int
     error_rate: str
     avg_latency_ms: float
