@@ -4,9 +4,10 @@ Used pydantic-settings for validation environment variables.
 """
 
 from functools import lru_cache
-
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
+load_dotenv()
 
 class Settings(BaseSettings):
     # LLM configration
@@ -15,6 +16,8 @@ class Settings(BaseSettings):
 
     primary_model: str = "gemini-2.5-flash"
     fallback_model: str = "gemini-2.5-flash"
+    google_api_key: str
+
 
     # Langsmith
     langsmith_tracing_v2: bool = True
